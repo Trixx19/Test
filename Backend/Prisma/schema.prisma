@@ -1,0 +1,143 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Usuario {
+  id_usuario            Int                  @id @default(autoincrement())
+  nome                  String
+  email                 String               @unique
+  senha_hash            String
+  tipo_usuario          TipoUsuario
+  criado_em             DateTime             @default(now())
+  especialidade_id      Int?
+  especialidade         Especialidade?       @relation(fields: [especialidade_id], references: [id_especialidade])
+  acoes_administrativas AcaoAdministrativa[]
+  artigos               Artigo[]
+  comentarios           Comentario[]
+  redefinir_senha       RedefinirSenha[]
+  avaliacoes_realizadas AvaliacaoEspecialista[]   @relation("Avaliador")
+  avaliacoes_recebidas  AvaliacaoEspecialista[]   @relation("Avaliado")
+}
+
+model Especialidade {
+  id_especialidade Int      @id @default(autoincrement())
+  nome             String
+  orgao_resp       String
+  status           Boolean  @default(true)
+  criado_em        DateTime @default(now())
+  atualizado_em    DateTime @updatedAt
+
+  especialistas Usuario[]
+  taxas          TaxaEspecialidade[]
+}
+
+model AcaoAdministrativa {
+  id_acao_admin Int      @id @default(autoincrement())
+  descricao     String
+  data          DateTime @default(now())
+  usuario_id    Int
+  usuario       Usuario  @relation(fields: [usuario_id], references: [id_usuario])
+}
+
+model Artigo {
+  id_artigo     Int                   @id @default(autoincrement())
+  titulo        String
+  conteudo      String
+  slug          String                @unique
+  autor_id      Int
+  criado_em     DateTime              @default(now())
+  atualizado_em DateTime              @updatedAt
+  status        StatusArtigo
+  autor         Usuario               @relation(fields: [autor_id], references: [id_usuario])
+  categorias    CategoriasOnArtigos[]
+  comentarios   Comentario[]
+  visualizacoes Visualizacao[]
+}
+
+model Categoria {
+  id_categoria   Int                   @id @default(autoincrement())
+  nome_categoria String                @unique
+  criado_em      DateTime              @default(now())
+  atualizado_em  DateTime              @updatedAt
+  artigos        CategoriasOnArtigos[]
+}
+
+model CategoriasOnArtigos {
+  artigo_id    Int
+  categoria_id Int
+  artigo       Artigo    @relation(fields: [artigo_id], references: [id_artigo])
+  categoria    Categoria @relation(fields: [categoria_id], references: [id_categoria])
+
+  @@id([artigo_id, categoria_id])
+}
+
+model Comentario {
+  id_comentario Int      @id @default(autoincrement())
+  conteudo      String
+  artigo_id     Int
+  usuario_id    Int
+  criado_em     DateTime @default(now())
+  artigo        Artigo   @relation(fields: [artigo_id], references: [id_artigo])
+  usuario       Usuario  @relation(fields: [usuario_id], references: [id_usuario])
+}
+
+model Visualizacao {
+  id_visualizacoes Int      @id @default(autoincrement())
+  artigo_id        Int
+  visto_em         DateTime @default(now())
+  artigo           Artigo   @relation(fields: [artigo_id], references: [id_artigo])
+}
+
+model RedefinirSenha {
+  id_redefinir Int      @id @default(autoincrement())
+  usuario_id   Int
+  email        String
+  token        String   @unique
+  expira_em    DateTime
+  usado        Boolean  @default(false)
+  criado_em    DateTime @default(now())
+  usuario      Usuario  @relation(fields: [usuario_id], references: [id_usuario])
+
+  @@index([usuario_id])
+  @@index([expira_em])
+}
+
+model AvaliacaoEspecialista {
+  id              Int      @id @default(autoincrement())
+  nota            Int
+  comentario      String?
+  criado_em       DateTime @default(now())
+
+  avaliador_id    Int
+  avaliado_id     Int
+
+  avaliador       Usuario @relation("Avaliador", fields: [avaliador_id], references: [id_usuario])
+  avaliado        Usuario @relation("Avaliado", fields: [avaliado_id], references: [id_usuario])
+}
+
+model TaxaEspecialidade {
+  id               Int           @id @default(autoincrement())
+  especialidade_id Int
+  taxa             Float
+  criado_em        DateTime      @default(now())
+  atualizado_em    DateTime      @updatedAt
+
+  especialidade    Especialidade @relation(fields: [especialidade_id], references: [id_especialidade])
+}
+
+enum TipoUsuario {
+  ADMIN
+  ESPECIALISTA
+  PACIENTE
+}
+
+enum StatusArtigo {
+  RASCUNHO
+  PENDENTE_APROVACAO
+  PUBLICADO
+}
