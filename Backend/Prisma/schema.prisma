@@ -14,20 +14,26 @@ model Usuario {
   senha_hash            String
   tipo_usuario          TipoUsuario
   criado_em             DateTime             @default(now())
+  especialidade_id      Int?
+  especialidade         Especialidade?       @relation(fields: [especialidade_id], references: [id_especialidade])
   acoes_administrativas AcaoAdministrativa[]
   artigos               Artigo[]
   comentarios           Comentario[]
-  medico                Medico?
   redefinir_senha       RedefinirSenha[]
+  avaliacoes_realizadas AvaliacaoEspecialista[]   @relation("Avaliador")
+  avaliacoes_recebidas  AvaliacaoEspecialista[]   @relation("Avaliado")
 }
 
-model Medico {
-  id_medico     Int     @id @default(autoincrement())
-  usuario_id    Int     @unique
-  especialidade String
-  telefone      String
-  crm           String  @unique
-  usuario       Usuario @relation(fields: [usuario_id], references: [id_usuario])
+model Especialidade {
+  id_especialidade Int      @id @default(autoincrement())
+  nome             String
+  orgao_resp       String
+  status           Boolean  @default(true)
+  criado_em        DateTime @default(now())
+  atualizado_em    DateTime @updatedAt
+
+  especialistas Usuario[]
+  taxas          TaxaEspecialidade[]
 }
 
 model AcaoAdministrativa {
@@ -92,7 +98,6 @@ model RedefinirSenha {
   usuario_id   Int
   email        String
   token        String   @unique
-  senha_temp_hash String?
   expira_em    DateTime
   usado        Boolean  @default(false)
   criado_em    DateTime @default(now())
@@ -102,9 +107,33 @@ model RedefinirSenha {
   @@index([expira_em])
 }
 
+model AvaliacaoEspecialista {
+  id              Int      @id @default(autoincrement())
+  nota            Int
+  comentario      String?
+  criado_em       DateTime @default(now())
+
+  avaliador_id    Int
+  avaliado_id     Int
+
+  avaliador       Usuario @relation("Avaliador", fields: [avaliador_id], references: [id_usuario])
+  avaliado        Usuario @relation("Avaliado", fields: [avaliado_id], references: [id_usuario])
+}
+
+model TaxaEspecialidade {
+  id               Int           @id @default(autoincrement())
+  especialidade_id Int
+  taxa             Float
+  criado_em        DateTime      @default(now())
+  atualizado_em    DateTime      @updatedAt
+
+  especialidade    Especialidade @relation(fields: [especialidade_id], references: [id_especialidade])
+}
+
 enum TipoUsuario {
-  Usuario
-  ADMINISTRADOR
+  ADMIN
+  ESPECIALISTA
+  PACIENTE
 }
 
 enum StatusArtigo {

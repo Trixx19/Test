@@ -37,10 +37,11 @@ export class UserController {
       if (error instanceof ZodError) {
         return res.status(400).json({
           error: "Dados inválidos",
-          details: error.errors.map((err) => ({
-            campo: err.path.join("."),
-            mensagem: err.message,
-          })),
+          details:
+            error.issues?.map((err) => ({
+              campo: err.path.join("."),
+              mensagem: err.message,
+            })) ?? [],
         });
       }
 
@@ -48,6 +49,24 @@ export class UserController {
       return res.status(500).json({
         error: "Erro interno do servidor",
       });
+    }
+  }
+
+  static async FindByEmail(req: Request, res: Response) {
+    try {
+      const email = req.params.email;
+      if (!email) {
+        return res.status(400).json({ error: "Email inválido" });
+      }
+      const usuario = await UserModel.findByEmailIncludingPassword(email);
+      if (!usuario) {
+        return res.status(404).json({ error: "Usuário não encontrado" });
+      }
+      const usuarioResponse = UserModel.removeSensitiveData(usuario);
+      return res.status(200).json({ usuario: usuarioResponse });
+    } catch (error) {
+      console.error("Erro ao buscar usuário por email:", error);
+      return res.status(500).json({ error: "Erro interno do servidor" });
     }
   }
 
@@ -81,7 +100,7 @@ export class UserController {
 
   static async update(req: Request, res: Response) {
     try {
-      const idParam = req.params.id;  
+      const idParam = req.params.id;
       if (!idParam) {
         return res.status(400).json({ error: "ID inválido" });
       }
@@ -101,7 +120,7 @@ export class UserController {
 
   static async delete(req: Request, res: Response) {
     try {
-      const idParam = req.params.id;  
+      const idParam = req.params.id;
       if (!idParam) {
         return res.status(400).json({ error: "ID inválido" });
       }

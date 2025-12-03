@@ -3,8 +3,8 @@ import { RecuperarSenhaController } from "../controllers/RecuperarSenhaControlle
 
 const router = Router();
 
-router.post("/recuperar-senha", RecuperarSenhaController.solicitarRecuperacao);
-
-router.post("/redefinir-senha", RecuperarSenhaController.redefinirSenha);
+router.get("/recuperar-senha", RecuperarSenhaController.solicitarRecuperacao);
+router.get("/validar-token", RecuperarSenhaController.validarToken);
+router.post("/redefinir-senha", RecuperarSenhaController.redefinirSenha); 
 
 export default router;

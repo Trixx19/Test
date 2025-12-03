@@ -175,4 +175,11 @@ export class UserModel {
       include: { medico: true },
     });
   }
+
+  static async findByEmailIncludingPassword(email: string) {
+    return await prisma.usuario.findUnique({
+      where: { email },
+      include: { medico: true },
+    });
+  }
 }

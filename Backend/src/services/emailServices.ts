@@ -42,17 +42,19 @@ export class EmailService {
     `;
 
     
-    try {
-      await transporter.sendMail({
-        from: `"Super Brasil Telessaúde" <${process.env.EMAIL_FROM_ADDRESS}>`,
-        to: to,
-        subject: "Recuperação de Senha",
-        html: htmlContent,
-      });
-      console.log(`E-mail de recuperação enviado para: ${to}`);
-    } catch (error) {
-      console.error(`Erro ao enviar e-mail para ${to}:`, error);
-      throw new Error("Erro ao enviar e-mail de recuperação.");
-    }
+   try {
+    await transporter.sendMail({
+      from: `"Super Brasil Telessaúde" <${process.env.EMAIL_FROM_ADDRESS}>`,
+      to: to,
+      subject: "Recuperação de Senha",
+      html: htmlContent,      
+    });
+    console.log(`E-mail de recuperação enviado para: ${to}`);
+    return true;
+  } catch (error) {
+    console.error(`Erro ao enviar e-mail para ${to}:`, error);
+    //Não estoura excessão - apenas registra e retorna false para chamador decidir
+    return false;
   }
+}
 }

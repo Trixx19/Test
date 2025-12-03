@@ -14,10 +14,8 @@ interface TokenPayload {
 export class LoginController {
   static async login(req: Request, res: Response) {
     try {
-      // Validar dados com Zod
       const validatedData = loginSchema.parse(req.body);
 
-      // Buscar usuário pelo email
       const usuario = await UserModel.findByEmail(validatedData.email);
       if (!usuario) {
         return res.status(401).json({
@@ -25,7 +23,6 @@ export class LoginController {
         });
       }
 
-      // Verificar senha
       const senhaCorreta = await bcrypt.compare(
         validatedData.senha,
         usuario.senha_hash
@@ -37,7 +34,6 @@ export class LoginController {
         });
       }
 
-      // Gerar token JWT
       const payload: TokenPayload = {
         id: usuario.id_usuario,
         tipo_usuario: usuario.tipo_usuario,
@@ -47,7 +43,6 @@ export class LoginController {
         expiresIn: jwtConfig.expiresIn,
       });
 
-      // Remover dados sensíveis do objeto de resposta
       const usuarioResponse = UserModel.removeSensitiveData(usuario);
 
       return res.status(200).json({
@@ -57,12 +52,14 @@ export class LoginController {
       });
     } catch (error) {
       if (error instanceof ZodError) {
+        console.error("Erro de validação no login:", error);
         return res.status(400).json({
           error: "Dados inválidos",
-          details: error.errors.map((err) => ({
-            campo: err.path.join("."),
-            mensagem: err.message,
-          })),
+          details:
+            error.issues?.map((err) => ({
+              campo: err.path.join("."),
+              mensagem: err.message,
+            })) ?? [],
         });
       }
 
