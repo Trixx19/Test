@@ -1,0 +1,167 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Usuario {
+  id_usuario            Int                  @id @default(autoincrement())
+  nome                  String
+  email                 String               @unique
+  senha_hash            String
+  tipo_usuario          TipoUsuario
+  criado_em             DateTime             @default(now())
+  
+  // Relacionamento opcional: Só existe se o usuário for ESPECIALISTA
+  medico                Medico?
+
+  // Relacionamentos gerais
+  acoes_administrativas AcaoAdministrativa[]
+  artigos               Artigo[]
+  comentarios           Comentario[]
+  redefinir_senha       RedefinirSenha[]
+  
+  // Avaliações que este usuário FEZ (como paciente)
+  avaliacoes_feitas     Avaliacao[]          @relation("Avaliador")
+}
+
+model Medico {
+  id_medico     Int      @id @default(autoincrement())
+  crm           String   @unique
+  telefone      String?  // Opcional
+  
+  // Relação 1:1 com Usuario
+  usuario_id    Int      @unique
+  usuario       Usuario  @relation(fields: [usuario_id], references: [id_usuario], onDelete: Cascade)
+
+  // Relação com Especialidade (Um médico pode ter uma ou várias)
+  especialidades Especialidade[] @relation("MedicoEspecialidades")
+  
+  // Avaliações que este médico RECEBEU
+  avaliacoes_recebidas Avaliacao[] @relation("Avaliado")
+}
+
+model Especialidade {
+  id_especialidade Int      @id @default(autoincrement())
+  nome             String   @unique // Evita duplicar "Cardiologia"
+  orgao_resp       String?  // Pode ser opcional
+  status           Boolean  @default(true)
+  criado_em        DateTime @default(now())
+  atualizado_em    DateTime @updatedAt
+
+  medicos          Medico[] @relation("MedicoEspecialidades")
+  taxas            TaxaEspecialidade[]
+}
+
+model Avaliacao {
+  id_avaliacao  Int      @id @default(autoincrement())
+  nota          Int
+  comentario    String?
+  criado_em     DateTime @default(now())
+  
+  avaliador_id  Int
+  avaliador     Usuario  @relation("Avaliador", fields: [avaliador_id], references: [id_usuario])
+  
+  medico_id     Int
+  medico        Medico   @relation("Avaliado", fields: [medico_id], references: [id_medico])
+}
+
+// --- OUTROS MODELS (Mantidos com pequenos ajustes) ---
+
+model AcaoAdministrativa {
+  id_acao_admin Int      @id @default(autoincrement())
+  descricao     String
+  data          DateTime @default(now())
+  usuario_id    Int
+  usuario       Usuario  @relation(fields: [usuario_id], references: [id_usuario])
+}
+
+model Artigo {
+  id_artigo     Int        @id @default(autoincrement())
+  titulo        String
+  conteudo      String     @db.Text // Recomendado para textos longos
+  slug          String     @unique
+  autor_id      Int
+  status        StatusArtigo
+  criado_em     DateTime   @default(now())
+  atualizado_em DateTime   @updatedAt
+  
+  autor         Usuario    @relation(fields: [autor_id], references: [id_usuario])
+  categorias    CategoriasOnArtigos[]
+  comentarios   Comentario[]
+  visualizacoes Visualizacao[]
+}
+
+model Categoria {
+  id_categoria   Int      @id @default(autoincrement())
+  nome_categoria String   @unique
+  criado_em      DateTime @default(now())
+  atualizado_em  DateTime @updatedAt
+  artigos        CategoriasOnArtigos[]
+}
+
+model CategoriasOnArtigos {
+  artigo_id    Int
+  categoria_id Int
+  artigo       Artigo    @relation(fields: [artigo_id], references: [id_artigo])
+  categoria    Categoria @relation(fields: [categoria_id], references: [id_categoria])
+
+  @@id([artigo_id, categoria_id])
+}
+
+model Comentario {
+  id_comentario Int      @id @default(autoincrement())
+  conteudo      String
+  artigo_id     Int
+  usuario_id    Int
+  criado_em     DateTime @default(now())
+  artigo        Artigo   @relation(fields: [artigo_id], references: [id_artigo])
+  usuario       Usuario  @relation(fields: [usuario_id], references: [id_usuario])
+}
+
+model Visualizacao {
+  id_visualizacoes Int      @id @default(autoincrement())
+  artigo_id        Int
+  visto_em         DateTime @default(now())
+  artigo           Artigo   @relation(fields: [artigo_id], references: [id_artigo])
+}
+
+model RedefinirSenha {
+  id_redefinir Int      @id @default(autoincrement())
+  usuario_id   Int
+  email        String
+  token        String   @unique
+  expira_em    DateTime
+  usado        Boolean  @default(false)
+  criado_em    DateTime @default(now())
+  usuario      Usuario  @relation(fields: [usuario_id], references: [id_usuario])
+
+  @@index([usuario_id])
+  @@index([expira_em])
+}
+
+model TaxaEspecialidade {
+  id               Int           @id @default(autoincrement())
+  especialidade_id Int
+  taxa             Float
+  criado_em        DateTime      @default(now())
+  atualizado_em    DateTime      @updatedAt
+
+  especialidade    Especialidade @relation(fields: [especialidade_id], references: [id_especialidade])
+  @@unique([especialidade_id])
+}
+
+enum TipoUsuario {
+  ADMIN
+  ESPECIALISTA
+  PACIENTE
+}
+
+enum StatusArtigo {
+  RASCUNHO
+  PENDENTE_APROVACAO
+  PUBLICADO
+}

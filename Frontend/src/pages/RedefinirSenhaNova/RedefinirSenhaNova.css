@@ -1,0 +1,73 @@
+.reset-nova-container {
+ position: fixed;     
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.25);
+  backdrop-filter: blur(6px);
+  z-index: 9999;
+}
+
+.reset-nova-card {
+  width: 450px;
+  background: #ffffff;
+  padding: 40px 30px;
+  border-radius: 18px;
+  box-shadow: 0px 4px 14px rgba(0, 0, 0, 0.15);
+  text-align: center;
+}
+
+.reset-nova-title {
+  font-size: 26px;
+  font-weight: 700;
+  color: #1a1a1a; 
+  margin-bottom: 10px;
+}
+
+.reset-nova-subtitle {
+  color: #555555;
+  font-size: 16px;
+  margin-bottom: 24px;
+}
+
+.reset-nova-input {
+  width: 90%;
+  padding: 12px;
+  border-radius: 12px;
+  border: none;
+  background: #e5e5e5;
+  margin-bottom: 18px;
+  text-align: center;
+  font-size: 15px;
+  color: #333;
+}
+
+.reset-nova-input::placeholder {
+  color: #777;
+}
+
+.reset-nova-button {
+  width: 100%;
+  padding: 12px;
+  background: #f4d24b;
+  border: none;
+  border-radius: 20px;
+  font-size: 17px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.reset-nova-button:hover {
+  background: #e2be3f;
+}
+
+.reset-nova-message {
+  margin-top: 14px;
+  font-size: 14px;
+  color: #444;
+}
